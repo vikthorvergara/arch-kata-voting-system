@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  spring-boot:
+    build:
+      context: ../spring-boot
+      dockerfile: Dockerfile
+    container_name: voting-spring-boot
+    ports:
+      - "8081:8080"
+    environment:
+      - JAVA_OPTS=-Xmx512m -Xms256m
+    networks:
+      - voting-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  go-gin:
+    build:
+      context: ../go-gin
+      dockerfile: Dockerfile
+    container_name: voting-go-gin
+    ports:
+      - "8082:8080"
+    networks:
+      - voting-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  go-fiber:
+    build:
+      context: ../go-fiber
+      dockerfile: Dockerfile
+    container_name: voting-go-fiber
+    ports:
+      - "8083:8080"
+    networks:
+      - voting-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  rust-actix:
+    build:
+      context: ../rust-actix
+      dockerfile: Dockerfile
+    container_name: voting-rust-actix
+    ports:
+      - "8084:8080"
+    networks:
+      - voting-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  rust-axum:
+    build:
+      context: ../rust-axum
+      dockerfile: Dockerfile
+    container_name: voting-rust-axum
+    ports:
+      - "8085:8080"
+    networks:
+      - voting-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  voting-network:
+    driver: bridge
