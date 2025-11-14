@@ -1,0 +1,49 @@
+# Benchmark Results (keep directory structure, ignore large result files)
+results/**/*.json
+results/**/*_output.txt
+!results/.gitkeep
+!results/README.md
+!results/BENCHMARK_RESULTS.md
+!results/BENCHMARK_METHODOLOGY.md
+!results/**/ANALYSIS.md
+!results/**/comparison_report.md
+
+# Build artifacts
+**/target/
+**/build/
+**/.gradle/
+**/.idea/
+**/*.iml
+
+# Dependencies
+**/node_modules/
+**/vendor/
+
+# Rust
+**/Cargo.lock
+
+# Go
+**/go.sum
+
+# Java
+**/.classpath
+**/.project
+**/.settings/
+**/bin/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Logs
+*.log
