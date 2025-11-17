@@ -1,3 +1,13 @@
+# TODO
+
+## Tradeoffs
+
+### Stream
+Kafka vs SQS (infra em aws)
+
+### Cache
+Redis vs memory cache aws vs elastic cache aws
+
 ## Tradeoff Comparison for Realtime Voting System Stack
 
 For a realtime voting system handling 300M users and 250k RPS peaks, the best choices prioritize horizontal scalability, low latency, and write durability while avoiding disallowed technologies. Key tradeoffs center on throughput vs. complexity, consistency vs. availability, and simplicity vs. feature richness. Below, I compare top options for critical components, selecting based on your Spring Boot/Kotlin/AWS background for easier adoption.
