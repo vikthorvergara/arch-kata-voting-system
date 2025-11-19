@@ -135,23 +135,28 @@ Gateways manage auth/rate limiting at ingress.
 | **Complexity** | Simpler config; familiar from web servers. | Modular but plugin management increases ops. |
 | **Best Fit Here** | Recommended: Superior performance for 250k RPS. Tradeoff: Fewer plugins vs. Kong's flexibility, but speed/security prioritize here. | Use for advanced routing if needed. |
 
-[1](https://www.confluent.io/blog/kafka-fastest-messaging-system/)
-[2](https://www.automq.com/blog/apache-kafka-vs-rabbitmq-differences-comparison)
-[3](https://latitude-blog.ghost.io/blog/rabbitmq-vs-kafka-latency-comparison-for-ai-systems/)
-[4](https://www.cloudthat.com/resources/blog/decoding-kafka-vs-rabbitmq-for-modern-real-time-applications/)
-[5](https://levitation.in/posts/cassandra-outperforms-postgresql-under-heavy-load-conditions)
-[6](https://www.knowi.com/blog/postgresql-vs-cassandra-key-differences-use-cases-performance/)
-[7](https://dev.to/wallaceespindola/cassandra-vs-postgresql-a-developers-guide-to-choose-the-right-database-3nhi)
-[8](https://www.wildnetedge.com/blogs/redis-vs-memcached-which-caching-tool-is-better)
-[9](https://dzone.com/articles/performance-and-scalability-analysis-of-redis-memcached)
-[10](https://stackoverflow.com/questions/10558465/memcached-vs-redis)
-[11](https://dev.to/jottyjohn/spring-mvc-vs-spring-webflux-choosing-the-right-framework-for-your-project-4cd2)
-[12](https://ojs.cuadernoseducacion.com/ojs/index.php/ced/article/download/9049/6180)
-[13](https://www.linkedin.com/pulse/building-high-performance-real-time-applications-java-geison-flores-244yf)
-[14](https://www.f5.com/company/blog/nginx/benchmarking-api-management-solutions-nginx-kong-amazon-real-time-apis)
-[15](https://daily.dev/blog/top-6-open-source-api-gateway-frameworks)
-[16](https://www.buoyant.io/linkerd-vs-istio)
-[17](https://linkerd.io/2021/11/29/linkerd-vs-istio-benchmarks-2021/)
-[18](https://www.bladepipe.com/blog/data_insights/kafka_vs_rabbitmq_vs_rocketmq_pulsar)
-[19](https://www.designgurus.io/blog/rabbitmq-kafka-activemq-system-design)
-[20](https://www.pubnub.com/blog/kafka-vs-rabbitmq-choosing-the-right-messaging-broker/)
+## References
+
+[1] Confluent - Kafka Fastest Messaging System: https://www.confluent.io/blog/kafka-fastest-messaging-system/
+
+[2] AutoMQ - Apache Kafka vs RabbitMQ Differences Comparison: https://www.automq.com/blog/apache-kafka-vs-rabbitmq-differences-comparison
+
+[3] Latitude - RabbitMQ vs Kafka Latency Comparison: https://latitude-blog.ghost.io/blog/rabbitmq-vs-kafka-latency-comparison-for-ai-systems/
+
+[4] CloudThat - Decoding Kafka vs RabbitMQ for Modern Real-Time Applications: https://www.cloudthat.com/resources/blog/decoding-kafka-vs-rabbitmq-for-modern-real-time-applications/
+
+[5] Levitation - Cassandra Outperforms PostgreSQL Under Heavy Load: https://levitation.in/posts/cassandra-outperforms-postgresql-under-heavy-load-conditions
+
+[6] Knowi - PostgreSQL vs Cassandra Key Differences and Performance: https://www.knowi.com/blog/postgresql-vs-cassandra-key-differences-use-cases-performance/
+
+[7] Dev.to - Cassandra vs PostgreSQL Developer's Guide: https://dev.to/wallaceespindola/cassandra-vs-postgresql-a-developers-guide-to-choose-the-right-database-3nhi
+
+[8] WildNet Edge - Redis vs Memcached Caching Tool Comparison: https://www.wildnetedge.com/blogs/redis-vs-memcached-which-caching-tool-is-better
+
+[9] DZone - Performance and Scalability Analysis of Redis and Memcached: https://dzone.com/articles/performance-and-scalability-analysis-of-redis-memcached
+
+[10] Stack Overflow - Memcached vs Redis Discussion: https://stackoverflow.com/questions/10558465/memcached-vs-redis
+
+[14] F5 - Benchmarking API Management Solutions NGINX Kong: https://www.f5.com/company/blog/nginx/benchmarking-api-management-solutions-nginx-kong-amazon-real-time-apis
+
+[15] Daily.dev - Top 6 Open Source API Gateway Frameworks: https://daily.dev/blog/top-6-open-source-api-gateway-frameworks
