@@ -1,31 +1,81 @@
-# TODO
+# Arch Kata
 
-## Tradeoffs
+## Problem
+You must design a Realtime voting system with the following requirements:
+1. Never loose Data
+2. Be secure and prevent bots and bad actors
+3. Handle 300M users
+4. Handle peak of 250k RPS
+5. Must ensure users vote only once
+6. Should be Realtime
 
-### Stream
-Kafka vs SQS (infra em aws)
+### Restrictions
+- Serverless
+- MongoDB
+- On-Premise, Google Cloud, Azure
+- OpenShift
+- Mainframes
+- Monolith Solutions
 
-### Cache
-Redis vs memory cache aws vs elastic cache aws
+## Messages
+Apache Flink integration with Kafka/MSK
+
+## Cache
+EC2 Redis vs ElastiCache cost analysis
 
 ## Tradeoff Comparison for Realtime Voting System Stack
 
 For a realtime voting system handling 300M users and 250k RPS peaks, the best choices prioritize horizontal scalability, low latency, and write durability while avoiding disallowed technologies. Key tradeoffs center on throughput vs. complexity, consistency vs. availability, and simplicity vs. feature richness. Below, I compare top options for critical components, selecting based on your Spring Boot/Kotlin/AWS background for easier adoption.
 
+## Messages
+
+### Apache Flink vs. Kafka Streams
+
+Stream processing frameworks that handle real-time vote analytics and aggregations on top of Kafka/MSK event streams.
+
+**Apache Flink**
+- **Throughput**: Processes millions of events/sec across distributed clusters. Single TaskManager handles 100k+ events/sec.
+- **Stateful Processing**: Built-in state management with RocksDB backend. Complex event processing and windowing without external databases.
+- **Deployment**: Separate cluster infrastructure (Kubernetes, YARN, or AWS Managed Service). Independent scaling from Kafka brokers.
+- **Scalability**: Horizontal scaling via TaskManager parallelism. Automatic state partitioning across workers.
+- **Latency**: Sub-second event processing with proper tuning. Event time windows enable accurate vote tallies despite delays.
+- **Cost**: AWS Managed Service for Apache Flink runs ~$0.11/hour per KPU. Estimate 10-20 KPUs for 250k RPS analytics ($800-1,600/month). Self-managed on EKS reduces cost but adds operational overhead.
+- **Operations**: Managed service handles scaling, checkpointing, recovery. Self-managed requires Kubernetes expertise and monitoring setup.
+- **Best for**: Complex event processing, multiple stateful operators, cross-stream joins, advanced windowing, non-Kafka data sources.
+
+**Kafka Streams**
+- **Throughput**: Processes millions of events/sec. Performance tied to Kafka partition count and consumer parallelism.
+- **Stateful Processing**: RocksDB-backed state stores with changelog topics. Simpler stateful operations and aggregations.
+- **Deployment**: Embedded library within your application (Spring Boot). No separate cluster infrastructure needed.
+- **Scalability**: Horizontal scaling by adding application instances. Limited by Kafka partition count (1 instance per partition max).
+- **Latency**: Sub-millisecond processing latency. Tighter integration with Kafka reduces overhead.
+- **Cost**: No separate infrastructure cost. Runs within existing application containers. Only pay for compute instances running your Spring Boot apps.
+- **Operations**: Deploy as part of your application. Simpler operational model. No separate cluster to manage.
+- **Best for**: Kafka-only pipelines, simpler stateful processing, embedded in Spring Boot apps, lower operational complexity.
+
+**Recommendation**: Kafka Streams for this voting system. Simpler operational model embedding directly in Spring Boot applications eliminates separate cluster management. For vote aggregations and real-time counters, Kafka Streams provides sufficient stateful processing capabilities with lower complexity and cost. Tradeoff is less flexibility for complex event processing vs Flink's advanced features, but the voting use case doesn't require cross-stream joins or complex windowing that would justify Flink's operational overhead.
+
 ### Event Streaming: Kafka vs. RabbitMQ
 
-#### TODO: With APACHE FLINK
+Event streaming decouples vote ingestion from processing, essential for handling bursts without data loss.
 
-Event streaming decouples vote ingestion from processing, essential for handling bursts without data loss. Kafka excels in high-throughput scenarios like this system, but RabbitMQ offers simpler setup for initial development.
+**Apache Kafka**
+- **Throughput**: 15x faster writes than RabbitMQ. Handles millions of messages/sec on multi-broker clusters. Ideal for 250k RPS vote events.
+- **Latency**: Low end-to-end latency at high throughputs (sub-ms at p99.9). Pull-based model batches for efficiency.
+- **Scalability**: Horizontal partitioning across brokers. Linear scaling for 300M user events with replayability for audits.
+- **Durability**: Built-in replication (factor 3) and log retention. No data loss even on failures.
+- **Complexity**: High setup with Zookeeper dependency and partitioning strategy. Steeper learning curve but mature for AWS MSK.
+- **Best for**: High write volume with replay requirements. Proven at LinkedIn/Uber scale.
 
-| Aspect | Apache Kafka [1][2] | RabbitMQ [2][3][4] |
-|--------|--------------------------------|-------------------------------------|
-| **Throughput** | 15x faster writes than RabbitMQ; handles millions of messages/sec on multi-broker clusters (e.g., 7T messages/day at scale). Ideal for 250k RPS vote events. | 4k-10k messages/sec; sufficient for moderate loads but bottlenecks at peaks without careful tuning. |
-| **Latency** | Low end-to-end latency at high throughputs (sub-ms at p99.9); pull-based model batches for efficiency. | Lower latency for low-volume real-time tasks (immediate push); degrades quickly under high load. |
-| **Scalability** | Horizontal partitioning across brokers; linear scaling for 300M user events with replayability for audits. | Vertical scaling preferred; clustering adds delays, limiting to smaller deployments. |
-| **Durability & Fault Tolerance** | Built-in replication (factor 3) and log retention; no data loss even on failures. | Optional persistence; requires config for durability, risking loss during spikes. |
-| **Complexity** | High setup (Zookeeper dependency, partitioning strategy); steeper learning curve but mature for AWS MSK. | Moderate; easier routing patterns and operations, better for prototypes. |
-| **Best Fit Here** | Recommended for voting: High write volume and replay needs outweigh RabbitMQ's simplicity. Tradeoff: More operational overhead but proven at LinkedIn/Uber scale. | Use if team prefers quick starts; hybrid with Kafka for analytics. |
+**RabbitMQ**
+- **Throughput**: 4k-10k messages/sec. Sufficient for moderate loads but bottlenecks at peaks without careful tuning.
+- **Latency**: Lower latency for low-volume real-time tasks with immediate push. Degrades quickly under high load.
+- **Scalability**: Vertical scaling preferred. Clustering adds delays, limiting to smaller deployments.
+- **Durability**: Optional persistence requiring configuration. Risks data loss during spikes.
+- **Complexity**: Moderate operational overhead. Easier routing patterns and operations, better for prototypes.
+- **Best for**: Quick starts and simpler deployments. Hybrid approach with Kafka for analytics.
+
+**Recommendation**: Kafka for voting system. High write volume and replay needs outweigh RabbitMQ's simplicity. Tradeoff is more operational overhead, but proven at scale.
 
 ### AWS Managed: Kafka (MSK) vs. SQS
 
@@ -51,33 +101,29 @@ For AWS deployments, choosing between managed Kafka (MSK) and native SQS depends
 
 **Recommendation**: MSK Provisioned for this voting system. The sustained 250k RPS, multi-consumer patterns (analytics, fraud detection, archival), and audit replay requirements justify the fixed cost (~$6,200/month) over SQS's variable pricing. Six m7g.4xlarge brokers provide 400 MB/sec capacity with 16x headroom over peak loads.
 
-### Primary Database: PostgreSQL vs. Cassandra
-
-#### TODO: search keyspace - datamax
-
-For storing 300M votes with uniqueness guarantees, databases must handle write-heavy loads while ensuring ACID properties. PostgreSQL fits relational needs but Cassandra offers better write distribution.
-
-| Aspect | PostgreSQL (Sharded) [5][6] | Apache Cassandra [5][6][7] |
-|--------|---------------------------------------|---------------------------------------------|
-| **Write Throughput** | 10k+ writes/sec per shard with optimization (e.g., batching, WAL); handles 250k RPS via 6-10 shards but adds coordination overhead. | 10-15x higher writes on clusters; excels at distributed append-only votes without single-node bottlenecks. |
-| **Read Performance** | Superior for complex queries (e.g., analytics on voter data); read replicas offload traffic. | Optimized for simple key-value reads; slower for joins but fast for vote tallies. |
-| **Scalability** | Horizontal via sharding (Citus extension); linear but requires custom partitioning by user ID/region. | Native distributed model; add nodes for seamless scaling to 300M records across data centers. |
-| **Consistency & Durability** | Full ACID transactions for vote once enforcement; WAL ensures no data loss. | Tunable consistency (eventual for writes); eventual model trades strict ACID for availability in peaks. |
-| **Complexity** | Familiar SQL for your Spring Boot apps; easier integration with JPA/Hibernate. | NoSQL learning curve; query limits (no joins) need denormalization. |
-| **Best Fit Here** | Recommended: Balances your relational expertise with sharding for scale. Tradeoff: More tuning for writes vs. Cassandra's out-of-box distribution, but better for audit queries. | Switch if writes dominate (>80% load); use for pure vote logs, with Postgres for user metadata. |
+## Cache
 
 ### In-Memory Store: Redis vs. Memcached
 
-Redis handles vote deduplication and real-time counters at 250k ops/sec. It trades simplicity for versatility compared to Memcached.
+Self-managed in-memory stores for vote deduplication and real-time counters.
 
-| Aspect | Redis Enterprise [8][9][10] | Memcached [8][9][10] |
-|--------|---------------------------------------------|--------------------------------------|
-| **Performance** | 200M ops/sec cluster-wide (5M/node); sub-ms latency for sets/gets, but higher tail latency under heavy writes. | Higher throughput/low latency for simple key-value (multi-threaded); excels in read-heavy but drops under contention. |
-| **Data Structures** | Rich support (sets, hashes, pub/sub) for rate limiting and counters; persistence (AOF/RDB) prevents loss. | Basic strings only; no persistence, risking eviction during peaks. |
-| **Scalability** | Clustering for horizontal growth; handles 300M sessions with sharding. | Easy horizontal (client-side); but no built-in replication, leading to hotspots. |
-| **Durability** | Configurable persistence for never lose data; TTL for vote tokens. | Volatile; data loss on restarts—unsuitable for critical dedup. |
-| **Complexity** | More features increase config time; integrates well with Spring Data Redis. | Simpler/faster setup; lighter resource use but limited extensibility. |
-| **Best Fit Here** | Recommended: Versatility for bot prevention and real-time updates. Tradeoff: Slightly higher resource use vs. Memcached's speed, but essential persistence wins for security. | Use for pure caching; pair with Redis for sessions. |
+**Redis**
+- **Performance**: 200M ops/sec cluster-wide (5M/node). Sub-ms latency for sets/gets, but higher tail latency under heavy writes.
+- **Data Structures**: Rich support for sets, hashes, pub/sub. Essential for rate limiting and counters. Persistence (AOF/RDB) prevents data loss.
+- **Scalability**: Clustering for horizontal growth. Handles 300M sessions with sharding.
+- **Durability**: Configurable persistence ensures no data loss. TTL support for vote tokens.
+- **Complexity**: More features increase config time. Integrates well with Spring Data Redis.
+- **Best for**: Bot prevention, real-time updates, deduplication requiring persistence.
+
+**Memcached**
+- **Performance**: Higher throughput/low latency for simple key-value operations. Multi-threaded architecture excels in read-heavy workloads but drops under contention.
+- **Data Structures**: Basic strings only. No persistence, risking eviction during peaks.
+- **Scalability**: Easy horizontal scaling via client-side sharding. No built-in replication can lead to hotspots.
+- **Durability**: Fully volatile. Data loss on restarts makes it unsuitable for critical deduplication.
+- **Complexity**: Simpler/faster setup. Lighter resource use but limited extensibility.
+- **Best for**: Pure caching. Pair with Redis for sessions.
+
+**Recommendation**: Redis for voting system. Versatility for bot prevention and real-time updates essential. Tradeoff is slightly higher resource use vs. Memcached's speed, but persistence wins for security.
 
 ### AWS Managed: ElastiCache for Redis vs. Memcached
 
@@ -124,49 +170,50 @@ Vote Request → ElastiCache Redis SET check (deduplication) →
 
 **Recommendation**: ElastiCache for Redis (cluster mode enabled) is required for this voting system. Memcached lacks essential features—no data structures for O(1) deduplication checks, no persistence for vote integrity, no atomic operations for counters. The managed service reduces operational overhead (automatic patching, failover, backups) while providing the 500M ops/sec capacity needed with 99.99% SLA. Total cost ~$10,000/month for 30-50 node cluster provides both deduplication and real-time counting capabilities.
 
-### Application Framework: Rust & Go vs Spring Boot
+### AWS Managed: EC2 Redis vs. ElastiCache Redis
 
-| Framework                       | Throughput (RPS) | Use Case Fit                                                          |
-| ------------------------------- | ---------------- | --------------------------------------------------------------------- |
-| Go (Gin/Fiber)                  | 800k–1M+         | Exceeds 250k by 3-4x; ideal for high-concurrency APIs                 |
-| Rust (Actix/Axum)               | 100k+ per core   | Maximizes per-core efficiency; best for compute-bound vote validation |
-| Spring Boot 4 (Virtual Threads) | 250k-300k        | Meets target but less margin; virtual threads narrow gap for I/O      |
+Choosing between self-managed Redis on EC2 and fully managed ElastiCache depends on cost optimization vs operational complexity tradeoffs.
 
-### API Gateway: NGINX vs. Kong
+**Self-Managed Redis on EC2**
+- **Performance**: Same Redis engine performance. You control tuning and optimization.
+- **Scalability**: Manual cluster setup with Redis Cluster. Requires scripting for adding nodes and rebalancing. No automatic scaling.
+- **Durability**: Self-configured RDB/AOF persistence. Manual backup management and restoration procedures. Risk of misconfiguration.
+- **High Availability**: Manual setup of Redis Sentinel or Cluster mode. You handle failover detection and promotion logic. No guaranteed SLA.
+- **Cost**: r7g.4xlarge instance ~$490/month (on-demand) or ~$290/month (reserved). 30-50 instances total ~$8,700-14,500/month (reserved). Lower base cost than ElastiCache but requires dedicated ops engineer (~$10k+/month).
+- **Operations**: Full responsibility for patching, monitoring, backup automation, cluster management, failover testing, security updates. Requires Redis expertise and 24/7 on-call.
+- **Best for**: Cost-sensitive deployments with existing Redis expertise and dedicated ops team. Acceptable operational burden.
 
-Gateways manage auth/rate limiting at ingress.
+**AWS ElastiCache for Redis**
+- **Performance**: Identical Redis performance. AWS-optimized networking.
+- **Scalability**: Push-button cluster scaling. Automatic shard rebalancing. Online resharding without downtime.
+- **Durability**: Automated backups with configurable retention. Point-in-time recovery. Multi-AZ replication built-in.
+- **High Availability**: Automatic failover in under 60 seconds. Multi-AZ with 99.99% SLA. Global Datastore for cross-region replication.
+- **Cost**: cache.r7g.4xlarge ~$730/month (on-demand) or ~$440/month (reserved). 30-50 nodes total ~$13,200-22,000/month (reserved). 50% higher base cost than EC2 but zero ops overhead.
+- **Operations**: AWS handles all infrastructure, patching, monitoring, backups, failover. You focus on data modeling and application integration. CloudWatch metrics included.
+- **Best for**: Production systems requiring high SLA, minimal operational burden, and proven reliability at scale.
 
-| Aspect | NGINX Plus [14][15] | Kong [14][15] |
-|--------|------------------------------|------------------------|
-| **Throughput** | 30k RPS at <30ms latency (p99.99); 50% higher max RPS than Kong. | 137k RPS but latency spikes (3x at p99.99); Lua plugins add overhead. |
-| **Latency** | Consistent <13ms even at peaks; real-time API standard. | Negligible up to p99, then exponential growth under load. |
-| **Features** | Built-in rate limiting/JWT; lighter for your AWS setup. | Plugin ecosystem for bots; more extensible but resource-heavy. |
-| **Scalability** | Horizontal with ALB integration; low CPU (40% less than Kong). | Good clustering; but higher latency at scale. |
-| **Complexity** | Simpler config; familiar from web servers. | Modular but plugin management increases ops. |
-| **Best Fit Here** | Recommended: Superior performance for 250k RPS. Tradeoff: Fewer plugins vs. Kong's flexibility, but speed/security prioritize here. | Use for advanced routing if needed. |
+**Recommendation**: ElastiCache for this voting system. The 300M user scale and 250k RPS demand 99.99% uptime that self-managed Redis on EC2 cannot guarantee without significant ops investment. While EC2 saves ~$4,000-8,000/month in infrastructure costs, the operational burden (24/7 on-call, manual failover, backup management, security patching) requires dedicated engineering ($10k+/month). ElastiCache's automatic failover, Multi-AZ replication, and managed backups justify the premium for mission-critical vote deduplication.
 
-## References
+## API Gateway
 
-[1] Confluent - Kafka Fastest Messaging System: https://www.confluent.io/blog/kafka-fastest-messaging-system/
+### NGINX vs. Kong
 
-[2] AutoMQ - Apache Kafka vs RabbitMQ Differences Comparison: https://www.automq.com/blog/apache-kafka-vs-rabbitmq-differences-comparison
+API gateways manage authentication and rate limiting at ingress.
 
-[3] Latitude - RabbitMQ vs Kafka Latency Comparison: https://latitude-blog.ghost.io/blog/rabbitmq-vs-kafka-latency-comparison-for-ai-systems/
+**NGINX Plus**
+- **Throughput**: 30k RPS at <30ms latency (p99.99). 50% higher max RPS than Kong.
+- **Latency**: Consistent <13ms even at peaks. Real-time API standard performance.
+- **Features**: Built-in rate limiting and JWT validation. Lighter resource footprint for AWS deployments.
+- **Scalability**: Horizontal scaling with ALB integration. 40% less CPU usage than Kong.
+- **Complexity**: Simpler configuration. Familiar syntax from web server background.
+- **Best for**: High-performance APIs prioritizing speed and low latency over plugin ecosystem.
 
-[4] CloudThat - Decoding Kafka vs RabbitMQ for Modern Real-Time Applications: https://www.cloudthat.com/resources/blog/decoding-kafka-vs-rabbitmq-for-modern-real-time-applications/
+**Kong**
+- **Throughput**: 137k RPS theoretical max but latency spikes (3x at p99.99). Lua plugins add overhead.
+- **Latency**: Negligible up to p99, then exponential growth under load.
+- **Features**: Rich plugin ecosystem for bot detection and custom routing. More extensible but resource-heavy.
+- **Scalability**: Good clustering support. Higher latency at scale due to plugin processing.
+- **Complexity**: Modular architecture. Plugin management increases operational complexity.
+- **Best for**: Advanced routing requirements and custom middleware needs.
 
-[5] Levitation - Cassandra Outperforms PostgreSQL Under Heavy Load: https://levitation.in/posts/cassandra-outperforms-postgresql-under-heavy-load-conditions
-
-[6] Knowi - PostgreSQL vs Cassandra Key Differences and Performance: https://www.knowi.com/blog/postgresql-vs-cassandra-key-differences-use-cases-performance/
-
-[7] Dev.to - Cassandra vs PostgreSQL Developer's Guide: https://dev.to/wallaceespindola/cassandra-vs-postgresql-a-developers-guide-to-choose-the-right-database-3nhi
-
-[8] WildNet Edge - Redis vs Memcached Caching Tool Comparison: https://www.wildnetedge.com/blogs/redis-vs-memcached-which-caching-tool-is-better
-
-[9] DZone - Performance and Scalability Analysis of Redis and Memcached: https://dzone.com/articles/performance-and-scalability-analysis-of-redis-memcached
-
-[10] Stack Overflow - Memcached vs Redis Discussion: https://stackoverflow.com/questions/10558465/memcached-vs-redis
-
-[14] F5 - Benchmarking API Management Solutions NGINX Kong: https://www.f5.com/company/blog/nginx/benchmarking-api-management-solutions-nginx-kong-amazon-real-time-apis
-
-[15] Daily.dev - Top 6 Open Source API Gateway Frameworks: https://daily.dev/blog/top-6-open-source-api-gateway-frameworks
+**Recommendation**: NGINX Plus for voting system. Superior performance for 250k RPS with consistent low latency. Tradeoff is fewer plugins vs Kong's flexibility, but speed and security prioritize for real-time voting.
