@@ -2,56 +2,24 @@
 
 left to right direction
 
-actor "Voter" as voter
-actor "System Administrator" as admin
-actor "Analytics System" as analytics
-actor "Bot/Bad Actor" as bot
+actor "User" as user
 
 rectangle "Voting System API" {
-  usecase "Submit Vote" as UC1
-  usecase "Verify Single Vote\nper User" as UC2
-  usecase "Check System\nHealth" as UC3
-  usecase "Detect Bot\nActivity" as UC4
-  usecase "Rate Limit\nRequests" as UC5
-  usecase "Retrieve Vote\nCount" as UC6
-  usecase "Monitor System\nPerformance" as UC7
-  usecase "Handle Peak\nLoad (250k RPS)" as UC8
+  usecase "Register\nPOST v1/auth/register" as UC1
+  usecase "Login\nPOST v1/auth/login" as UC2
+  usecase "Create Event\nPOST v1/event/create" as UC3
+  usecase "Get Event Leaderboard\nGET v1/event/{event_id}/leaderboard" as UC4
+  usecase "Get Contestants List\nGET v1/contestants/{event_id}" as UC5
+  usecase "Submit Vote\nPOST v1/vote/submit" as UC6
+  usecase "Verify Vote Status\nGET v1/vote/{vote_id}/status" as UC7
 }
 
-voter --> UC1 : POST /api/vote
-UC1 ..> UC2 : <<includes>>
-UC1 ..> UC4 : <<includes>>
-UC1 ..> UC5 : <<includes>>
-UC1 --> UC6 : returns totalVotes
-
-bot -[#red]-> UC1 : attempts
-UC4 -[#red]-> bot : <<blocks>>
-UC5 -[#red]-> bot : <<blocks>>
-
-admin --> UC3 : GET /health-check
-admin --> UC7
-
-analytics --> UC6
-
-UC1 ..> UC8 : <<extends>>
-UC3 ..> UC7 : <<includes>>
-
-note right of UC2
-  Ensures 300M users
-  can vote only once
-  using Redis cache
-end note
-
-note right of UC4
-  Security requirement:
-  prevent bots and
-  bad actors
-end note
-
-note right of UC8
-  Must handle peaks
-  of 250k RPS with
-  no data loss
-end note
+user --> UC1
+user --> UC2
+user --> UC3
+user --> UC4
+user --> UC5
+user --> UC6
+user --> UC7
 
 @enduml
