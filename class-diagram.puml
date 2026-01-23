@@ -1,0 +1,56 @@
+@startuml Voting System Class Diagram
+
+class User {
+    +id: UUID
+    +email: String
+    +status: UserStatus
+}
+
+class Event {
+    +id: UUID
+    +name: String
+    +startDate: Timestamp
+    +endDate: Timestamp
+    +status: EventStatus
+}
+
+class Contestant {
+    +id: UUID
+    +eventId: UUID
+    +name: String
+}
+
+class Vote {
+    +id: UUID
+    +userId: UUID
+    +eventId: UUID
+    +contestantId: UUID
+    +timestamp: Timestamp
+    +status: VoteStatus
+}
+
+enum UserStatus {
+    PENDING
+    ACTIVE
+    SUSPENDED
+}
+
+enum EventStatus {
+    SCHEDULED
+    ACTIVE
+    CLOSED
+}
+
+enum VoteStatus {
+    PENDING
+    CONFIRMED
+    REJECTED
+}
+
+User "1" --> "0..*" Vote : casts
+User "1" --> "0..*" Event : creates
+Event "1" --> "1..*" Contestant : has
+Event "1" --> "0..*" Vote : receives
+Contestant "1" --> "0..*" Vote : receives
+
+@enduml
