@@ -1,0 +1,51 @@
+@startuml Voting System Deployment
+
+skinparam componentStyle rectangle
+
+actor User
+
+cloud "AWS" {
+    [Route 53 + CloudFront] as edge
+    [WAF + Shield] as waf
+
+    frame "Region 1" {
+        [ALB] as alb1
+        [EKS Fargate] as eks1
+        queue "MSK Kafka" as kafka1
+        database "Redis" as redis1
+    }
+
+    frame "Region 2" {
+        [ALB] as alb2
+        [EKS Fargate] as eks2
+        queue "MSK Kafka" as kafka2
+        database "Redis" as redis2
+    }
+
+    database "DynamoDB\nGlobal Tables" as dynamo
+    storage "S3" as s3
+    [Cognito] as auth
+}
+
+User --> edge
+edge --> waf
+waf --> alb1
+waf --> alb2
+
+alb1 --> eks1
+alb2 --> eks2
+
+eks1 --> redis1
+eks1 --> kafka1
+eks1 --> auth
+
+eks2 --> redis2
+eks2 --> kafka2
+eks2 --> auth
+
+kafka1 --> dynamo
+kafka2 --> dynamo
+
+dynamo --> s3
+
+@enduml
