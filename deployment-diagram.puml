@@ -2,20 +2,20 @@
 !include <awslib/AWSCommon>
 !include <awslib/General/Users>
 !include <awslib/Compute/EC2>
-!include <awslib/Database/RDS>
-!include <awslib/SecurityIdentityCompliance/WAF>
+!include <awslib/Database/DynamoDB>
+!include <awslib/ApplicationIntegration/APIGateway>
 !include <awslib/SecurityIdentityCompliance/Cognito>
 
 title Realtime Voting System
 
-Users(client, "Users", "Web/Mobile Clients")
+Users(client, "Devs", "Developers")
 
 package "AWS Cloud" {
   package "Voting VPC" {
-    WAF(waf, "AWS WAF", "Bot & DDoS protection")
+    APIGateway(gateway, "AWS Gateway", "Bot & DDoS protection")
     EC2(nginx1, "NGINX #1", "Reverse Proxy")
     EC2(app1, "Vote API #1", "Spring Boot/Kotlin")
-    RDS(rds, "RDS", "Votes & audit")
+    DynamoDB(dynamo, "DynamoDb", "Votes & audit")
     Cognito(auth, "Auth Provider", "Auth")
   }
 
@@ -24,11 +24,11 @@ package "AWS Cloud" {
   }
 }
 
-client --> waf
-waf --> nginx1
+client --> jenkins
+jenkins --> gateway
+gateway --> auth
+gateway --> nginx1
 nginx1 --> app1
-app1 --> rds
-client --> auth
-auth --> app1
+app1 --> dynamo
 
 @enduml
