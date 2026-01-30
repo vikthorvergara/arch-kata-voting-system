@@ -1,51 +1,34 @@
-@startuml Voting System Deployment
+@startuml
+!include <awslib/AWSCommon>
+!include <awslib/General/Users>
+!include <awslib/Compute/EC2>
+!include <awslib/Database/RDS>
+!include <awslib/SecurityIdentityCompliance/WAF>
+!include <awslib/SecurityIdentityCompliance/Cognito>
 
-skinparam componentStyle rectangle
+title Realtime Voting System
 
-actor User
+Users(client, "Users", "Web/Mobile Clients")
 
-cloud "AWS" {
-    [Route 53 + CloudFront] as edge
-    [WAF + Shield] as waf
+package "AWS Cloud" {
+  package "Voting VPC" {
+    WAF(waf, "AWS WAF", "Bot & DDoS protection")
+    EC2(nginx1, "NGINX #1", "Reverse Proxy")
+    EC2(app1, "Vote API #1", "Spring Boot/Kotlin")
+    RDS(rds, "RDS", "Votes & audit")
+    Cognito(cognito, "Cognito", "Auth")
+  }
 
-    frame "Region 1" {
-        [ALB] as alb1
-        [EKS Fargate] as eks1
-        queue "MSK Kafka" as kafka1
-        database "Redis" as redis1
-    }
-
-    frame "Region 2" {
-        [ALB] as alb2
-        [EKS Fargate] as eks2
-        queue "MSK Kafka" as kafka2
-        database "Redis" as redis2
-    }
-
-    database "DynamoDB\nGlobal Tables" as dynamo
-    storage "S3" as s3
-    [Cognito] as auth
+  package "CI/CD VPC" {
+    EC2(jenkins, "Jenkins", "CI/CD")
+  }
 }
 
-User --> edge
-edge --> waf
-waf --> alb1
-waf --> alb2
-
-alb1 --> eks1
-alb2 --> eks2
-
-eks1 --> redis1
-eks1 --> kafka1
-eks1 --> auth
-
-eks2 --> redis2
-eks2 --> kafka2
-eks2 --> auth
-
-kafka1 --> dynamo
-kafka2 --> dynamo
-
-dynamo --> s3
+client --> waf
+waf --> nginx1
+nginx1 --> app1
+app1 --> rds
+client --> cognito
+cognito --> app1
 
 @enduml
