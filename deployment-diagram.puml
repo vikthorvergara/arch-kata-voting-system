@@ -16,7 +16,7 @@ package "AWS Cloud" {
     EC2(nginx1, "NGINX #1", "Reverse Proxy")
     EC2(app1, "Vote API #1", "Spring Boot/Kotlin")
     RDS(rds, "RDS", "Votes & audit")
-    Cognito(cognito, "Cognito", "Auth")
+    Auth(auth, "Auth Provider", "Auth")
   }
 
   package "CI/CD VPC" {
@@ -28,7 +28,7 @@ client --> waf
 waf --> nginx1
 nginx1 --> app1
 app1 --> rds
-client --> cognito
-cognito --> app1
+client --> auth
+auth --> app1
 
 @enduml
