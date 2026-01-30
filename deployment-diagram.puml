@@ -16,7 +16,7 @@ package "AWS Cloud" {
     EC2(nginx1, "NGINX #1", "Reverse Proxy")
     EC2(app1, "Vote API #1", "Spring Boot/Kotlin")
     RDS(rds, "RDS", "Votes & audit")
-    Auth(auth, "Auth Provider", "Auth")
+    Cognito(auth, "Auth Provider", "Auth")
   }
 
   package "CI/CD VPC" {
