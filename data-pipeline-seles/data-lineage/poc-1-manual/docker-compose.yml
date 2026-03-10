@@ -1,0 +1,32 @@
+services:
+  marquez-db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: marquez
+      POSTGRES_PASSWORD: marquez
+      POSTGRES_DB: marquez
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "marquez"]
+      interval: 5s
+      retries: 10
+
+  marquez:
+    image: marquezproject/marquez:0.50.0
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    volumes:
+      - ./marquez.yml:/usr/src/app/marquez.yml
+    depends_on:
+      marquez-db:
+        condition: service_healthy
+
+  marquez-web:
+    image: marquezproject/marquez-web:0.50.0
+    ports:
+      - "3000:3000"
+    environment:
+      MARQUEZ_HOST: marquez
+      MARQUEZ_PORT: "5000"
+    depends_on:
+      - marquez
