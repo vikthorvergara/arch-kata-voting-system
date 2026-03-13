@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="SalesService"
+             targetNamespace="http://sales.com/wsdl"
+             xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:tns="http://sales.com/wsdl"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+
+    <types>
+        <xsd:schema targetNamespace="http://sales.com/wsdl">
+            <xsd:element name="SubmitSaleRequest">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="salesmanName" type="xsd:string"/>
+                        <xsd:element name="city" type="xsd:string"/>
+                        <xsd:element name="country" type="xsd:string"/>
+                        <xsd:element name="amount" type="xsd:decimal"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="SubmitSaleResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="status" type="xsd:string"/>
+                        <xsd:element name="message" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </xsd:schema>
+    </types>
+
+    <message name="SubmitSaleInput">
+        <part name="parameters" element="tns:SubmitSaleRequest"/>
+    </message>
+    <message name="SubmitSaleOutput">
+        <part name="parameters" element="tns:SubmitSaleResponse"/>
+    </message>
+
+    <portType name="SalesPortType">
+        <operation name="submitSale">
+            <input message="tns:SubmitSaleInput"/>
+            <output message="tns:SubmitSaleOutput"/>
+        </operation>
+    </portType>
+
+    <binding name="SalesBinding" type="tns:SalesPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="submitSale">
+            <soap:operation soapAction="http://sales.com/submitSale"/>
+            <input><soap:body use="literal"/></input>
+            <output><soap:body use="literal"/></output>
+        </operation>
+    </binding>
+
+    <service name="SalesService">
+        <port name="SalesPort" binding="tns:SalesBinding">
+            <soap:address location="http://localhost:8080/sales"/>
+        </port>
+    </service>
+</definitions>

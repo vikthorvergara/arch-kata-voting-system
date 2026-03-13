@@ -1,0 +1,77 @@
+services:
+  neo4j:
+    image: neo4j:4.4
+    environment:
+      NEO4J_AUTH: neo4j/test1234
+      NEO4J_PLUGINS: '["apoc"]'
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  amundsen-elasticsearch:
+    image: elasticsearch:7.17.16
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms256m -Xmx256m"
+    ports:
+      - "9202:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  amundsen-metadata:
+    image: amundsendev/amundsen-metadata:4.2.0
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    environment:
+      PROXY_HOST: bolt://neo4j
+      PROXY_PORT: 7687
+      PROXY_USER: neo4j
+      PROXY_PASSWORD: test1234
+      PROXY_CLIENT: NEO4J
+    ports:
+      - "5002:5002"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5002/healthcheck || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+
+  amundsen-search:
+    image: amundsendev/amundsen-search:4.0.2
+    depends_on:
+      amundsen-elasticsearch:
+        condition: service_healthy
+    environment:
+      PROXY_ENDPOINT: amundsen-elasticsearch
+      PROXY_PORT: 9200
+      PROXY_CLIENT: ELASTICSEARCH
+    ports:
+      - "5001:5001"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5001/healthcheck || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+
+  amundsen-frontend:
+    image: amundsendev/amundsen-frontend:4.3.0
+    depends_on:
+      amundsen-metadata:
+        condition: service_healthy
+      amundsen-search:
+        condition: service_healthy
+    environment:
+      METADATASERVICE_BASE: http://amundsen-metadata:5002
+      SEARCHSERVICE_BASE: http://amundsen-search:5001
+    ports:
+      - "5000:5000"
