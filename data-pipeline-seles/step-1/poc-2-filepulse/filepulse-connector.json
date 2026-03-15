@@ -1,0 +1,31 @@
+{
+  "name": "filepulse-products-connector",
+  "config": {
+    "connector.class": "io.streamthoughts.kafka.connect.filepulse.source.FilePulseSourceConnector",
+    "tasks.max": "1",
+    "fs.listing.class": "io.streamthoughts.kafka.connect.filepulse.fs.LocalFSDirectoryListing",
+    "fs.listing.directory.path": "/tmp/filepulse-input",
+    "fs.listing.filters": "io.streamthoughts.kafka.connect.filepulse.fs.filter.RegexFileListFilter",
+    "file.filter.regex.pattern": ".*\\.csv$",
+    "fs.cleanup.policy.class": "io.streamthoughts.kafka.connect.filepulse.fs.clean.LogCleanupPolicy",
+    "tasks.reader.class": "io.streamthoughts.kafka.connect.filepulse.fs.reader.LocalRowFileInputReader",
+    "offset.strategy": "name",
+    "skip.headers": "1",
+    "filters": "parseCSV,extractKey",
+    "filters.parseCSV.type": "io.streamthoughts.kafka.connect.filepulse.filter.DelimitedRowFilter",
+    "filters.parseCSV.extractColumnName": "headers",
+    "filters.parseCSV.trimColumn": "true",
+    "filters.parseCSV.separator": ",",
+    "filters.parseCSV.schema": "sale_id:STRING,product_name:STRING,quantity:INT,unit_price:DOUBLE,category:STRING",
+    "filters.extractKey.type": "io.streamthoughts.kafka.connect.filepulse.filter.AppendFilter",
+    "filters.extractKey.field": "$key",
+    "filters.extractKey.value": "{{ $value.sale_id }}",
+    "tasks.file.status.storage.bootstrap.servers": "kafka:29092",
+    "tasks.file.status.storage.topic": "connect-file-pulse-status",
+    "tasks.file.status.storage.topic.replication.factor": "1",
+    "topic": "sales.products",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false"
+  }
+}
