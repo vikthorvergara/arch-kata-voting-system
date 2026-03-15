@@ -1,0 +1,7 @@
+sale_id,product_name,quantity,unit_price,category
+550e8400-e29b-41d4-a716-446655440000,Enterprise License,5,3000.10,software
+550e8400-e29b-41d4-a716-446655440001,Cloud Storage 1TB,10,150.00,infrastructure
+550e8400-e29b-41d4-a716-446655440002,Security Suite,3,2500.00,software
+550e8400-e29b-41d4-a716-446655440003,API Gateway,1,5000.00,infrastructure
+550e8400-e29b-41d4-a716-446655440004,Support Plan Premium,2,1200.00,services
+550e8400-e29b-41d4-a716-446655440005,Data Analytics Platform,1,8000.00,software
